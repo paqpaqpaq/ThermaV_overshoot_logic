@@ -12,3 +12,4 @@ Make sure the target is below the temperature of the outlet water, otherwise the
 
 <img width="1079" alt="Scherm­afbeelding 2023-12-08 om 08 15 01" src="https://github.com/paqpaqpaq/ThermaV_overshoot_logic/assets/34166264/a93c1ad8-76d0-4f04-b4b0-3e341c341b8a">
 
+"Stooklijn" must be set to ON for "Overshoot control" to be functional. 
