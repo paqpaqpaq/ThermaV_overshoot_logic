@@ -419,9 +419,6 @@ sensor:
                     id(overshoot_stooklijn_offset).publish_state(-4); // stooklijn verlaging in aantal graden Ta
                     OvershootLogic = true;
                       ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
-                    // reset compressor state
-                    compressorHzLessThanEqualOneInLastMinute = false;
-                      ESP_LOGD("debug", "Compressor Hz is 0.00: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
 
                     last_offset_publish_time = millis();
                     state++;
@@ -438,6 +435,10 @@ sensor:
                     ESP_LOGD("debug", "gaat naar case 1");
                     ESP_LOGD("debug", "Millis difference: %lu", millis() - last_offset_publish_time);
                     ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                    // reset compressor state
+                    compressorHzLessThanEqualOneInLastMinute = false;
+                      ESP_LOGD("debug", "Compressor Hz is 0.00: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
+
                     if (millis() - last_offset_publish_time >= 4 * 60 * 1000) { // duur van 1e verlaging in minuten
                       ESP_LOGD("debug", "bezig met timer case 1");
                       ESP_LOGD("debug", "Millis difference: %lu", millis() - last_offset_publish_time);
