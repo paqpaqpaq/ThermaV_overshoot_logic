@@ -363,7 +363,7 @@ sensor:
             static bool compressorHzLessThanEqualOneInLastMinute = false; 
             static bool resetCompressorHzFlag = false;
             static bool OvershootLogic = false;
-            static int state = 0;
+            int state = 0;
 
             if(id(bedrijfsmodus).state != 2 ) return;
             if(isnan(id(buiten_temp).state)) return;
@@ -394,6 +394,7 @@ sensor:
                         resetCompressorHzFlag = false;  // Reset the flag here
                         ESP_LOGD("debug", "Compressor Hz is 0.00, (her)start: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
                         id(overshoot_stooklijn_offset).publish_state(-0);
+                        state = 0;
                         break;
                     }
                 }
