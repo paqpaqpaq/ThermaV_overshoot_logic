@@ -361,7 +361,9 @@ sensor:
         - lambda: |-
             static unsigned long last_publish_time = 0;
             static bool compressorHzLessThanEqualOneInLastMinute = false; 
+            static bool resetCompressorHzFlag = false;
             static bool OvershootLogic = false;
+            static int state = 0;
 
             if(id(bedrijfsmodus).state != 2 ) return;
             if(isnan(id(buiten_temp).state)) return;
@@ -376,13 +378,31 @@ sensor:
             static float prev_tr = id(water_temp_retour).state;
             float temp_new_target = id(watertemp_target).state;        //nieuw Ta target
             static bool target_reached = false;                        //system logic (to switch off after target is reached)
-
-            static int state = 0;  // State variable to track the current step
             static unsigned long last_offset_publish_time = 0;
 
             float oat = round(id(buiten_temp).state);
             const float Z = ((float)id(stooklijn_min_wtemp).state-(float)id(stooklijn_max_wtemp).state) / ((float)id(stooklijn_max_oat).state - (float)id(stooklijn_min_oat).state);
               ESP_LOGD("stooklijn", "verwarmen volgens stooklijn, met buitentemp: %.1f, Z: %.1f",oat, Z);
+          
+            // Controleer de compressor status
+            auto checkCompressorState = [&]() {
+                unsigned long currentTime = millis();
+                for (unsigned long time = currentTime - 100 * 1000; time <= currentTime && (!compressorHzLessThanEqualOneInLastMinute || resetCompressorHzFlag); time += 1000) {
+                    if (id(compressor_hz).raw_state <= 1.00) {
+                        ESP_LOGD("debug", "Controlleer status compressor");
+                        compressorHzLessThanEqualOneInLastMinute = true;
+                        resetCompressorHzFlag = false;  // Reset the flag here
+                        ESP_LOGD("debug", "Compressor Hz is 0.00, (her)start: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
+                        id(overshoot_stooklijn_offset).publish_state(-0);
+                        break;
+                    }
+                }
+                if (compressorHzLessThanEqualOneInLastMinute && id(compressor_hz).raw_state > 1.00) {
+                    ESP_LOGD("debug", "Compressor Hz is greater than 1.00 again");
+                    resetCompressorHzFlag = true;  // Set the flag to indicate that the condition has been met
+                }
+            };
+            checkCompressorState();  // Call the compressor state check
 
             // Update de stooklijn bij verwarming
             bool inschakelUpdate = false; 
@@ -390,7 +410,7 @@ sensor:
             if (id(bedrijfsmodus).state == 2 && !inschakelUpdate){
               id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
                 (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
-                  ESP_LOGD("Stooklijn", "Stooklijn bijgewerkt");
+                ESP_LOGD("Stooklijn", "Stooklijn bijgewerkt");
               inschakelUpdate = true;
               
 
@@ -398,20 +418,6 @@ sensor:
               // Reset flag
               inschakelUpdate = false;
             }
-          
-            unsigned long currentTime = millis();
-            for (unsigned long time = currentTime - 100 * 1000; time <= currentTime && !compressorHzLessThanEqualOneInLastMinute; time += 1000) {
-
-              // Check if compressor_hz was less than or equal to 1 at any moment in the past minute
-              if (id(compressor_hz).raw_state <= 1.00) {
-                ESP_LOGD("debug", "Controlleer status compressor");
-                compressorHzLessThanEqualOneInLastMinute = true;
-                ESP_LOGD("debug", "Compressor Hz is 0.00, (her)start: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
-                id(overshoot_stooklijn_offset).publish_state(-0);
-                break;  // No need to continue checking
-               }
-            }
-
 
             // --------warmtepomp is actief ----------------------
             if (id(compressor_running).state) {
@@ -436,9 +442,13 @@ sensor:
                     OvershootLogic = true;
                       ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
 
-
                     last_offset_publish_time = millis();
-                    state++;
+                    if (!id(compressor_running).state) {
+                      state = 0;
+                    } else {
+                      state++;  // Increment state if compressor is running
+                    }
+
 
                     id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
                                           (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
@@ -466,7 +476,11 @@ sensor:
                         ESP_LOGD("debug", "Published -3, millis: %lu", millis());
 
                         last_offset_publish_time = millis();
-                        state++;
+                        if (!id(compressor_running).state) {
+                          state = 0;
+                        } else {
+                          state++;  // Increment state if compressor is running
+                        }
 
                         id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
                                                 (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
@@ -495,7 +509,11 @@ sensor:
                       ESP_LOGD("debug", "Published -2, millis: %lu", millis());
 
                       last_offset_publish_time = millis();
-                      state++;
+                      if (!id(compressor_running).state) {
+                          state = 0;
+                        } else {
+                          state++;  // Increment state if compressor is running
+                        }
 
                       id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
                                             (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
@@ -520,7 +538,11 @@ sensor:
                       id(overshoot_stooklijn_offset).publish_state(-1);
                       ESP_LOGD("debug", "Published -1, millis: %lu", millis());
                       last_offset_publish_time = millis();
-                      state++;
+                      if (!id(compressor_running).state) {
+                          state = 0;
+                        } else {
+                          state++;  // Increment state if compressor is running
+                        }
 
                       id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
                                             (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
@@ -559,7 +581,7 @@ sensor:
                             last_offset_publish_time = millis();
                         }
                     }
-
+                    
                     break;
                 }
               }
