@@ -385,15 +385,14 @@ sensor:
               ESP_LOGD("stooklijn", "verwarmen volgens stooklijn, met buitentemp: %.1f, Z: %.1f",oat, Z);
 
             unsigned long currentTime = millis();
-            // bool compressorHzLessThanEqualOneInLastMinute = false; 
-            ESP_LOGD("debug", "Controlleer status compressor");
-
-            for (unsigned long time = currentTime - 100 * 1000; time <= currentTime; time += 1000) {
+            for (unsigned long time = currentTime - 100 * 1000; time <= currentTime && !compressorHzLessThanEqualOneInLastMinute; time += 1000) {
 
               // Check if compressor_hz was less than or equal to 1 at any moment in the past minute
-              if (id(compressor_hz).raw_state <= 0.00) {
+              if (id(compressor_hz).raw_state <= 1.00) {
+                ESP_LOGD("debug", "Controlleer status compressor");
                 compressorHzLessThanEqualOneInLastMinute = true;
-                ESP_LOGD("debug", "Compressor Hz is 0.00, (her)start");
+                ESP_LOGD("debug", "Compressor Hz is 0.00, (her)start: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
+                id(overshoot_stooklijn_offset).publish_state(-0);
                 break;  // No need to continue checking
                }
             }
@@ -420,6 +419,9 @@ sensor:
                     id(overshoot_stooklijn_offset).publish_state(-4); // stooklijn verlaging in aantal graden Ta
                     OvershootLogic = true;
                       ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                    // reset compressor state
+                    compressorHzLessThanEqualOneInLastMinute = false;
+                      ESP_LOGD("debug", "Compressor Hz is 0.00: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
 
                     last_offset_publish_time = millis();
                     state++;
