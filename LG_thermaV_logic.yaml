@@ -562,16 +562,14 @@ sensor:
                             last_offset_publish_time = millis();
                             
                         }
-
-                      
+                     state = -1;    
                     }
-                  default:
-                    state = 0;  
-                    break;
+                    break;   
                 }
               }
-              // state = 0;
-
+              if (!id(compressor_running).state) {
+                state = 0;
+              } 
               temp_new_target = std::min(temp_new_target, id(stooklijn_target));
 
               ESP_LOGD("target", "RETURN_TEMP: %.1f OUTLET_TEMP: %.1f TARGET: %.1f NEW_TARGET: %.1f ",
