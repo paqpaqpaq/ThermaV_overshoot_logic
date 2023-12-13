@@ -394,6 +394,7 @@ sensor:
                         resetCompressorHzFlag = false;  // Reset the flag here
                         ESP_LOGD("debug", "Compressor Hz is 0.00, (her)start: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
                         id(overshoot_stooklijn_offset).publish_state(-0);
+                        ESP_LOGD("debug", "Current state: %d", state);
                         break;
                     }
                 }
@@ -422,166 +423,137 @@ sensor:
                 ESP_LOGD("debug", "Compressor is running - checking overshoot control");
                 ESP_LOGD("debug", "overshootcontrol_on_off.state: %s", id(overshootcontrol_on_off).state ? "true" : "false");
                 ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                ESP_LOGD("debug", "Current state: %d", state);
 
-              if ((id(overshootcontrol_on_off).state && compressorHzLessThanEqualOneInLastMinute) || (id(overshootcontrol_on_off).state && OvershootLogic)) {
-                
-                float temp_target_incremented = 0.0;
+                if ((id(overshootcontrol_on_off).state && compressorHzLessThanEqualOneInLastMinute) || (id(overshootcontrol_on_off).state && OvershootLogic)) {
+                    ESP_LOGD("debug", "Current state: %d", state);
+                    float temp_target_incremented = 0.0;
 
-                switch (state) {
-                  case 0:
-                    // zet bij defrost stille modus uit
-                    if (id(defrosting).state) {
-                      id(silent_mode_switch).turn_off();
-                      ESP_LOGD("debug", "Silent Mode switch set to OFF");
-                    }
+                    if (state == 0) {
+                        // zet bij defrost stille modus uit
+                        if (id(defrosting).state) {
+                            id(silent_mode_switch).turn_off();
+                            ESP_LOGD("debug", "Silent Mode switch set to OFF");
+                        }
 
-                    ESP_LOGD("debug", "gaat naar case 0");
-                    id(overshoot_stooklijn_offset).publish_state(-4); // stooklijn verlaging in aantal graden Ta
-                    OvershootLogic = true;
-                      ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                        ESP_LOGD("debug", "gaat naar case 0");
+                        id(overshoot_stooklijn_offset).publish_state(-4); // stooklijn verlaging in aantal graden Ta
+                        ESP_LOGD("debug", "overshoot stooklijn -4");
 
-                    last_offset_publish_time = millis();
-                    state++;
-
-                    id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
-                                          (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
-
-                    ESP_LOGD("stooklijn", "gecorrigeerd target stap 1 overshoot: %.1f", id(stooklijn_target));
-                    id(watertemp_target).publish_state(id(stooklijn_target));
-                    
-                    
-                    break;
-
-                  case 1:
-                    ESP_LOGD("debug", "gaat naar case 1");
-                      // reset compressor state
-                    // compressorHzLessThanEqualOneInLastMinute = false;
-                      ESP_LOGD("debug", "Compressor Hz is 0.00: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
-                    ESP_LOGD("debug", "Millis difference: %lu", millis() - last_offset_publish_time);
-                    ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
-                    if (millis() - last_offset_publish_time >= 4 * 60 * 1000) { // duur van 1e verlaging in minuten
-                        ESP_LOGD("debug", "bezig met timer case 1");
-                        ESP_LOGD("debug", "Millis difference: %lu", millis() - last_offset_publish_time);
-                        ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
-
-                        id(overshoot_stooklijn_offset).publish_state(-3); // stooklijn verlaging in aantal graden Ta, 1 hoger dan vorige stap
-                        ESP_LOGD("debug", "Published -3, millis: %lu", millis());
+                        OvershootLogic = true;
+                        ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
 
                         last_offset_publish_time = millis();
 
                         id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
-                                                (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
-
-                        ESP_LOGD("stooklijn", "gecorrigeerd target stap 2 overshoot: %.1f", id(stooklijn_target));
+                                              (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
+                        ESP_LOGD("stooklijn", "gecorrigeerd target stap 1 overshoot: %.1f", id(stooklijn_target));
                         id(watertemp_target).publish_state(id(stooklijn_target));
 
-                        if (!id(compressor_running).state) {
-                            // Reset timer only if the compressor is not running
+                        state++;
+                    } else if (state == 1) {
+                        // reset compressor state
+                        compressorHzLessThanEqualOneInLastMinute = false;
+                        ESP_LOGD("debug", "Compressor Hz is 0.00: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
+                        ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                        if (millis() - last_offset_publish_time >= 4 * 60 * 1000) { // duur van 1e verlaging in minuten EVENTUEEL WIJZIGEN
+                            ESP_LOGD("debug", "bezig met timer state 1");
+                            ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
+
+                            id(overshoot_stooklijn_offset).publish_state(-3); // stooklijn verlaging in aantal graden Ta, 1 hoger dan vorige stap
+                            ESP_LOGD("debug", "overshoot stooklijn 3");
+
                             last_offset_publish_time = millis();
+
+                            id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
+                                                    (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
+                            ESP_LOGD("stooklijn", "gecorrigeerd target stap 2 overshoot: %.1f", id(stooklijn_target));
+                            id(watertemp_target).publish_state(id(stooklijn_target));
+
+                            state++;
                         }
-                      state++;
-                    }
-                    
-                    break;
+                    } else if (state == 2) {
+                        ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                        if (millis() - last_offset_publish_time >= 4 * 60 * 1000) { // duur van 2e verlaging in minuten EVENTUEEL WIJZIGEN
+                            ESP_LOGD("debug", "bezig met timer state 2");
+                            ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
 
-                  case 2:
-                    ESP_LOGD("debug", "gaat naar case 2");
-                    ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
-                    if (millis() - last_offset_publish_time >= 4 * 60 * 1000) { // duur van 2e verlaging in minuten
-                      ESP_LOGD("debug", "bezig met timer case 2");
+                            id(overshoot_stooklijn_offset).publish_state(-2); // stooklijn verlaging in aantal graden Ta, 1 hoger dan vorige stap
+                            ESP_LOGD("debug", "overshoot stooklijn -2");
 
-                      
-                      ESP_LOGD("debug", "Millis difference: %lu", millis() - last_offset_publish_time);
-                      ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
-
-                      id(overshoot_stooklijn_offset).publish_state(-2); // stooklijn verlaging in aantal graden Ta, 1 hoger dan vorige stap
-                      ESP_LOGD("debug", "Published -2, millis: %lu", millis());
-
-                      last_offset_publish_time = millis();
-                      
-                      id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
-                                            (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
-
-                      ESP_LOGD("stooklijn", "gecorrigeerd target stap 3 overshoot: %.1f", id(stooklijn_target));
-                      id(watertemp_target).publish_state(id(stooklijn_target));
-                        if (!id(compressor_running).state) {
-                            // Reset timer only if the compressor is not running
                             last_offset_publish_time = millis();
-                        }
-                      state++;
-                    }
-                    break;
 
-                  case 3:
-                    ESP_LOGD("debug", "gaat naar case 3");
-                    ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
-                    if (millis() - last_offset_publish_time >= 4 * 60 * 1000) {
-                      ESP_LOGD("debug", "bezig met timer case 3");
-                      ESP_LOGD("debug", "Millis difference: %lu", millis() - last_offset_publish_time);
-                      ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
+                            id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
+                                                  (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
 
-                      id(overshoot_stooklijn_offset).publish_state(-1);
-                      ESP_LOGD("debug", "Published -1, millis: %lu", millis());
-                      last_offset_publish_time = millis();
-                      
-                      id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
-                                            (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
-
-                      ESP_LOGD("stooklijn", "gecorrigeerd target stap 4 overshoot: %.1f", id(stooklijn_target));
-                      id(watertemp_target).publish_state(id(stooklijn_target));
-                        if (!id(compressor_running).state) {
-                            // Reset timer only if the compressor is not running
-                            last_offset_publish_time = millis();
-                        }
-                      state++;
-                    }
-                    break;
-
-                  case 4:
-                    ESP_LOGD("debug", "gaat naar case 4");
-                    ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
-                    if (millis() - last_offset_publish_time >= 3 * 60 * 1000) {
-                      ESP_LOGD("debug", "bezig met timer case 4");
-                      ESP_LOGD("debug", "Millis difference: %lu", millis() - last_offset_publish_time);
-                      ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
-
-                      id(overshoot_stooklijn_offset).publish_state(-0);
-                      ESP_LOGD("debug", "Published -0, millis: %lu", millis());
-                      OvershootLogic = false;
-                      ESP_LOGD("debug", "KLAAR");
-
-                      id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
-                                            (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
-
-                      ESP_LOGD("stooklijn", "origineel target: %.1f", id(stooklijn_target));
-                      id(watertemp_target).publish_state(id(stooklijn_target));
-
-                      last_offset_publish_time = millis();  // Update the last offset publish time
-                        if (!id(compressor_running).state) {
-                            // Reset timer only if the compressor is not running
-                            last_offset_publish_time = millis();
+                            ESP_LOGD("stooklijn", "gecorrigeerd target stap 3 overshoot: %.1f", id(stooklijn_target));
+                            id(watertemp_target).publish_state(id(stooklijn_target));
                             
+                            state++;
                         }
-                     state = -1;    
+                    } else if (state == 3) {
+                        ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                        if (millis() - last_offset_publish_time >= 4 * 60 * 1000) { // duur van 3e verlaging in minuten EVENTUEEL WIJZIGEN
+                            ESP_LOGD("debug", "bezig met timer state 3");
+                            ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
+
+                            id(overshoot_stooklijn_offset).publish_state(-1);
+                            ESP_LOGD("debug", "overshoot stooklijn-1");
+                            
+                            last_offset_publish_time = millis();
+
+                            id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
+                                                  (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
+
+                            ESP_LOGD("stooklijn", "gecorrigeerd target stap 4 overshoot: %.1f", id(stooklijn_target));
+                            id(watertemp_target).publish_state(id(stooklijn_target));
+
+                            state++;
+                        }
+                    } else if (state == 4) {
+                        ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                        if (millis() - last_offset_publish_time >= 3 * 60 * 1000) { // duur van laatste verlaging in minuten EVENTUEEL WIJZIGEN
+                            ESP_LOGD("debug", "bezig met timer state 4");
+                            ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
+
+                            id(overshoot_stooklijn_offset).publish_state(-0);
+                            ESP_LOGD("debug", "overshoot stooklijn 0");
+                            OvershootLogic = false;
+                            ESP_LOGD("debug", "KLAAR");
+
+                            id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
+                                                  (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
+                            ESP_LOGD("stooklijn", "origineel target: %.1f", id(stooklijn_target));
+                            id(watertemp_target).publish_state(id(stooklijn_target));
+
+                            state = 0;
+                        }
                     }
-                    break;   
                 }
-              }
-              if (!id(compressor_running).state) {
+             }
+              else if (!id(compressor_running).state) {
+                ESP_LOGD("debug", "Compressor not running. Resetting state to 0");
                 state = 0;
-              } 
-              temp_new_target = std::min(temp_new_target, id(stooklijn_target));
+                // Reset timer only if the compressor is not running
+                last_offset_publish_time = millis();
 
-              ESP_LOGD("target", "RETURN_TEMP: %.1f OUTLET_TEMP: %.1f TARGET: %.1f NEW_TARGET: %.1f ",
-                      id(water_temp_retour).state, id(water_temp_aanvoer).state, id(stooklijn_target), temp_new_target);
-
-              id(pendel_watertemp_target).publish_state(temp_new_target);
-              id(water_temp_target_output).set_level(temp_new_target * 0.01);
-            } else if (!id(compressor_running).state) {
-              id(water_temp_target_output).set_level(id(stooklijn_target) * 0.01);
-              target_reached = false;
             }
 
+              if (id(compressor_running).state) {
+                temp_new_target = std::min(temp_new_target, id(stooklijn_target));
+
+                ESP_LOGD("target", "RETURN_TEMP: %.1f OUTLET_TEMP: %.1f TARGET: %.1f NEW_TARGET: %.1f ",
+                        id(water_temp_retour).state, id(water_temp_aanvoer).state, id(stooklijn_target), temp_new_target);
+
+                id(pendel_watertemp_target).publish_state(temp_new_target);
+                id(water_temp_target_output).set_level(temp_new_target * 0.01);
+            } else if (!id(compressor_running).state) {
+                id(water_temp_target_output).set_level(id(stooklijn_target) * 0.01);
+                target_reached = false;
+            }
+
+     
+          
                 // ----------------calculate stooklijn target---------------------------------
           
             if(prev_oat != oat || id(force_update_stooklijn)){      // if no oat change, no update needed, unless forced or first run
