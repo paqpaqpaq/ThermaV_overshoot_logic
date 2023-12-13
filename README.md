@@ -4,6 +4,8 @@ The 'stooklijn' or heating curve can be set either via the esp webinterface or v
 
 <img width="387" alt="Scherm­afbeelding 2023-12-10 om 11 21 10" src="https://github.com/paqpaqpaq/ThermaV_overshoot_logic/assets/34166264/edeedbe9-aac6-4560-94ad-9611a08b5207">
 
+Simultaneously you can apply an offset to the heating curve as desired.
+
 The logic functions by 'pulling down' the water heating target by 4 degrees for set intervals. 
 The needed intervals will depend on the heat pump, water target and overall system, so play around with this. 
 There are 5 States in the logic, States 0-4. 'State 0' contains the first delay interval; 'State 1' the second interval and so on.
