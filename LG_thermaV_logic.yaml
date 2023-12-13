@@ -147,7 +147,7 @@ number:
         - lambda: |-
             id(force_update_stooklijn) = true;
 
-# mee aan het kutten
+# mee aan het testen
   - platform: template
     id: oat_silent_always_off
     name: "Buitentemperatuur silent uit"
