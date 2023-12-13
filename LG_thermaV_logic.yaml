@@ -436,7 +436,7 @@ sensor:
                             ESP_LOGD("debug", "Silent Mode switch set to OFF");
                         }
 
-                        ESP_LOGD("debug", "gaat naar case 0");
+                        ESP_LOGD("debug", "start de OvershootLogic");
                         id(overshoot_stooklijn_offset).publish_state(-4); // stooklijn verlaging in aantal graden Ta
                         ESP_LOGD("debug", "overshoot stooklijn -4");
 
