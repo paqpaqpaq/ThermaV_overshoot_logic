@@ -6,7 +6,7 @@ The 'stooklijn' or heating curve can be set either via the esp webinterface or v
 
 The logic functions by 'pulling down' the water heating target by 4 degrees for set intervals. 
 The needed intervals will depend on the heat pump, water target and overall system, so play around with this. 
-There are 5 cases in the logic, cases 0-4. Case 0 contains the first delay interval; case 1 the second interval and so on.
+There are 5 States in the logic, states 0-4. 'State 0' contains the first delay interval; 'State 1' the second interval and so on.
 
 Make sure the target is below the temperature of the outlet water, otherwise the funtionality of the logic might be useless. 
 
