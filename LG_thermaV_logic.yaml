@@ -114,7 +114,7 @@ number:
         - lambda: |-
             id(force_update_stooklijn) = true;
 
-# offset op stooklijn. Handig voor nachtverlaging of buiten de deur? Kijk uit met hysterese settigns van de controller!
+# offset op stooklijn. Handig voor nachtverlaging of buiten de deur? Kijk uit met hysterese settings van de controller!
   - platform: template
     name: "Stooklijn offset"
     id: wp_stooklijn_offset
