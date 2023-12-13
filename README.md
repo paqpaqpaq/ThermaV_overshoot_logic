@@ -8,7 +8,7 @@ The logic functions by 'pulling down' the water heating target by 4 degrees for 
 The needed intervals will depend on the heat pump, water target and overall system, so play around with this. 
 There are 5 States in the logic, States 0-4. 'State 0' contains the first delay interval; 'State 1' the second interval and so on.
 
-Make sure the target is below the temperature of the outlet water, otherwise the funtionality of the logic might be pointless. 
+Make sure the target from States 0-3 remains below the temperature of the outlet water, otherwise the funtionality of the logic might be pointless. 
 
 <img width="1079" alt="Scherm­afbeelding 2023-12-08 om 08 15 01" src="https://github.com/paqpaqpaq/ThermaV_overshoot_logic/assets/34166264/a93c1ad8-76d0-4f04-b4b0-3e341c341b8a">
 
