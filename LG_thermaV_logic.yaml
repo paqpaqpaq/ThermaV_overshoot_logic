@@ -423,7 +423,7 @@ sensor:
                 ESP_LOGD("debug", "Compressor is running - checking overshoot control");
                 ESP_LOGD("debug", "overshootcontrol_on_off.state: %s", id(overshootcontrol_on_off).state ? "true" : "false");
                 ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
-                ESP_LOGD("debug", "Current state: %d", state);
+                ESP_LOGD("debug", "Huidige state: %d", state);
 
                 if ((id(overshootcontrol_on_off).state && compressorHzLessThanEqualOneInLastMinute) || (id(overshootcontrol_on_off).state && OvershootLogic)) {
                     ESP_LOGD("debug", "Current state: %d", state);
@@ -436,7 +436,7 @@ sensor:
                             ESP_LOGD("debug", "Silent Mode switch set to OFF");
                         }
 
-                        ESP_LOGD("debug", "start de OvershootLogic");
+                        ESP_LOGD("debug", "Start de OvershootLogic");
                         id(overshoot_stooklijn_offset).publish_state(-4); // stooklijn verlaging in aantal graden Ta
                         ESP_LOGD("debug", "overshoot stooklijn -4");
 
@@ -456,9 +456,9 @@ sensor:
                         compressorHzLessThanEqualOneInLastMinute = false;
                         ESP_LOGD("debug", "Compressor Hz is 0.00: %s", compressorHzLessThanEqualOneInLastMinute ? "true" : "false");
                         ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                        ESP_LOGD("debug", "Timer in seconden: %.0f", (millis() - last_offset_publish_time) / 1000.0);
                         if (millis() - last_offset_publish_time >= 4 * 60 * 1000) { // duur van 1e verlaging in minuten EVENTUEEL WIJZIGEN
                             ESP_LOGD("debug", "bezig met timer state 1");
-                            ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
 
                             id(overshoot_stooklijn_offset).publish_state(-3); // stooklijn verlaging in aantal graden Ta, 1 hoger dan vorige stap
                             ESP_LOGD("debug", "overshoot stooklijn 3");
@@ -474,9 +474,9 @@ sensor:
                         }
                     } else if (state == 2) {
                         ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                        ESP_LOGD("debug", "Timer in seconden: %.0f", (millis() - last_offset_publish_time) / 1000.0);
                         if (millis() - last_offset_publish_time >= 4 * 60 * 1000) { // duur van 2e verlaging in minuten EVENTUEEL WIJZIGEN
                             ESP_LOGD("debug", "bezig met timer state 2");
-                            ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
 
                             id(overshoot_stooklijn_offset).publish_state(-2); // stooklijn verlaging in aantal graden Ta, 1 hoger dan vorige stap
                             ESP_LOGD("debug", "overshoot stooklijn -2");
@@ -493,9 +493,9 @@ sensor:
                         }
                     } else if (state == 3) {
                         ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                        ESP_LOGD("debug", "Timer in seconden: %.0f", (millis() - last_offset_publish_time) / 1000.0);
                         if (millis() - last_offset_publish_time >= 4 * 60 * 1000) { // duur van 3e verlaging in minuten EVENTUEEL WIJZIGEN
                             ESP_LOGD("debug", "bezig met timer state 3");
-                            ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
 
                             id(overshoot_stooklijn_offset).publish_state(-1);
                             ESP_LOGD("debug", "overshoot stooklijn-1");
@@ -512,9 +512,9 @@ sensor:
                         }
                     } else if (state == 4) {
                         ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
+                        ESP_LOGD("debug", "Timer in seconden: %.0f", (millis() - last_offset_publish_time) / 1000.0);
                         if (millis() - last_offset_publish_time >= 3 * 60 * 1000) { // duur van laatste verlaging in minuten EVENTUEEL WIJZIGEN
                             ESP_LOGD("debug", "bezig met timer state 4");
-                            ESP_LOGD("debug", "Seconds difference: %.2f", (millis() - last_offset_publish_time) / 1000.0);
 
                             id(overshoot_stooklijn_offset).publish_state(-0);
                             ESP_LOGD("debug", "overshoot stooklijn 0");
