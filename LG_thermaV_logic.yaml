@@ -418,23 +418,22 @@ sensor:
               inschakelUpdate = false;
             }
 
-            // --------warmtepomp is actief ----------------------
+                        // --------warmtepomp is actief ----------------------
             if (id(compressor_running).state) {
                 ESP_LOGD("debug", "Compressor is running - checking overshoot control");
                 ESP_LOGD("debug", "overshootcontrol_on_off.state: %s", id(overshootcontrol_on_off).state ? "true" : "false");
                 ESP_LOGD("debug", "OvershootLogic: %s", OvershootLogic ? "true" : "false");
                 ESP_LOGD("debug", "Huidige state: %d", state);
 
+                // zet bij defrost stille modus uit
+                if (id(defrosting).state) {
+                  id(silent_mode_switch).turn_off();
+                  ESP_LOGD("debug", "Silent Mode switch set to OFF");
+                }
+                
                 if ((id(overshootcontrol_on_off).state && compressorHzLessThanEqualOneInLastMinute) || (id(overshootcontrol_on_off).state && OvershootLogic)) {
                     ESP_LOGD("debug", "Current state: %d", state);
                     float temp_target_incremented = 0.0;
-
-                    if (state == 0) {
-                        // zet bij defrost stille modus uit
-                        if (id(defrosting).state) {
-                            id(silent_mode_switch).turn_off();
-                            ESP_LOGD("debug", "Silent Mode switch set to OFF");
-                        }
 
                         ESP_LOGD("debug", "Start de OvershootLogic");
                         id(overshoot_stooklijn_offset).publish_state(-4); // stooklijn verlaging in aantal graden Ta
