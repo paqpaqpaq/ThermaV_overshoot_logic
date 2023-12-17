@@ -430,11 +430,13 @@ sensor:
                   id(silent_mode_switch).turn_off();
                   ESP_LOGD("debug", "Silent Mode switch set to OFF");
                 }
-                
+
                 if ((id(overshootcontrol_on_off).state && compressorHzLessThanEqualOneInLastMinute) || (id(overshootcontrol_on_off).state && OvershootLogic)) {
                     ESP_LOGD("debug", "Current state: %d", state);
                     float temp_target_incremented = 0.0;
 
+                    if (state == 0) {
+                        
                         ESP_LOGD("debug", "Start de OvershootLogic");
                         id(overshoot_stooklijn_offset).publish_state(-4); // stooklijn verlaging in aantal graden Ta
                         ESP_LOGD("debug", "overshoot stooklijn -4");
