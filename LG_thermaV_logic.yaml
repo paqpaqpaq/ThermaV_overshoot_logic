@@ -407,6 +407,19 @@ sensor:
             };
             checkCompressorState();  // Call the compressor state check
 
+                        // Update de stooklijn bij verwarming
+            bool inschakelUpdate = false; 
+
+            if (id(bedrijfsmodus).state == 2 && !inschakelUpdate){
+              id(stooklijn_target) = (int)round(Z * (oat - id(stooklijn_min_oat).state) + id(stooklijn_max_wtemp).state) +
+                (id(wp_stooklijn_offset).state) + (id(overshoot_stooklijn_offset).state);
+                ESP_LOGD("Stooklijn", "Stooklijn bijgewerkt");
+              inschakelUpdate = true;
+            } else if (id(bedrijfsmodus).state != 2) {
+              // Reset flag
+              inschakelUpdate = false;
+            }
+
                         // --------warmtepomp is actief ----------------------
             if (id(compressor_running).state) {
                 ESP_LOGD("debug", "Compressor is running - checking overshoot control");
